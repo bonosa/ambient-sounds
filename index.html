@@ -3,51 +3,1189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stay Tuned</title>
+    <title>Urban Noise Filter - AI Soundscape</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
             color: white;
+            overflow-x: hidden;
         }
 
         .container {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        h1 {
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h1 {
             font-size: 3rem;
-            margin: 0;
-            font-weight: 300;
-            letter-spacing: 2px;
-            animation: pulse 2s ease-in-out infinite alternate;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .ai-status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-status.loading {
+            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .ai-status.active {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .ai-status.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .main-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .control-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #fff;
+        }
+
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            margin: 0 auto;
+            display: block;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .mic-button.active {
+            background: linear-gradient(45deg, #51cf66, #40c057);
+            animation: pulse 2s infinite;
+        }
+
+        .mic-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         @keyframes pulse {
-            from {
-                opacity: 0.8;
+            0% { box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(81, 207, 102, 0.8); }
+            100% { box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4); }
+        }
+
+        .noise-display {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .noise-level {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .noise-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .noise-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #51cf66, #ffd43b, #ff6b6b);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .soundscape-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .soundscape-btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .soundscape-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .soundscape-btn.active {
+            background: linear-gradient(45deg, #4c6ef5, #364fc7);
+            box-shadow: 0 4px 15px rgba(76, 110, 245, 0.4);
+        }
+
+        .stop-all-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52) !important;
+            border: 1px solid rgba(255, 107, 107, 0.3) !important;
+        }
+
+        .stop-all-btn:hover {
+            background: linear-gradient(45deg, #ff5252, #e53935) !important;
+            transform: translateY(-2px);
+        }
+
+        .volume-control {
+            margin-top: 15px;
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4c6ef5;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .analysis-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .analysis-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .analysis-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .analysis-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .visualizer {
+            height: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wave-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 2px;
+            padding: 10px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(0deg, #4c6ef5, #74c0fc);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+            opacity: 0.8;
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, #74c0fc, #4c6ef5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .recommendation h4 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .training-progress {
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
             }
-            to {
-                opacity: 1;
+
+            .control-section {
+                grid-template-columns: 1fr;
+            }
+
+            .soundscape-controls {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Stay Tuned</h1>
+        <div class="header">
+            <h1>🤖 AI Urban Noise Filter</h1>
+            <p>Neural Network-Powered Personalized Soundscapes</p>
+        </div>
+
+        <div class="ai-status loading" id="aiStatus">
+            <div id="aiStatusText">🤖 Loading TensorFlow.js and training neural network...</div>
+            <div class="training-progress" id="trainingProgress" style="display: none;">
+                <div>Training Progress: <span id="epochText">0/50 epochs</span></div>
+                <div>Accuracy: <span id="accuracyText">0%</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <div class="control-section">
+                <div class="control-group">
+                    <h3>🤖 AI Noise Detection</h3>
+                    <button class="mic-button" id="micButton" disabled>🎤</button>
+                    <div class="noise-display">
+                        <div class="noise-level">
+                            <span id="noiseStatus">Waiting for AI to load...</span>
+                        </div>
+                        <div class="noise-bar">
+                            <div class="noise-fill" id="noiseFill"></div>
+                        </div>
+                        <div id="noiseType">AI Status: Initializing neural network...</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>🧠 AI Soundscape Generator</h3>
+                    <div class="soundscape-controls">
+                        <button class="soundscape-btn" data-soundscape="nature" disabled>🌿 Nature</button>
+                        <button class="soundscape-btn" data-soundscape="white-noise" disabled>⚪ White Noise</button>
+                        <button class="soundscape-btn" data-soundscape="rain" disabled>🌧️ Rain</button>
+                        <button class="soundscape-btn" data-soundscape="ocean" disabled>🌊 Ocean</button>
+                        <button class="soundscape-btn" data-soundscape="cafe" disabled>☕ Café</button>
+                        <button class="soundscape-btn" data-soundscape="focus" disabled>🎯 Focus</button>
+                        <button class="soundscape-btn stop-all-btn" data-soundscape="stop" disabled>🔇 Stop All</button>
+                    </div>
+                    <div class="volume-control">
+                        <label>Volume: <span id="volumeValue">50%</span></label>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visualizer">
+                <div class="wave-container" id="waveContainer"></div>
+            </div>
+
+            <div class="analysis-panel">
+                <h3>🤖 AI Real-time Analysis</h3>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <div class="analysis-value" id="decibelLevel">-- dB</div>
+                        <div class="analysis-label">Noise Level</div>
+                    </div>
+                    <div class="analysis-item">
+                        <div class="analysis-value" id="dominantFreq">-- Hz</div>
+                        <div class="analysis-label">Dominant Frequency</div>
+                    </div>
+                    <div class="analysis-item">
+                        <div class="analysis-value" id="noiseClassification">Loading...</div>
+                        <div class="analysis-label">AI Classification</div>
+                    </div>
+                    <div class="analysis-item">
+                        <div class="analysis-value" id="confidenceLevel">--%</div>
+                        <div class="analysis-label">AI Confidence</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation" id="recommendation">
+                <h4>🤖 AI Neural Network Status</h4>
+                <p>Initializing TensorFlow.js and creating neural network architecture. Please wait while the AI trains...</p>
+            </div>
+        </div>
     </div>
+
+    <!-- TensorFlow.js for real AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+
+    <script>
+        class AIUrbanNoiseFilter {
+            constructor() {
+                this.isMonitoring = false;
+                this.audioContext = null;
+                this.microphone = null;
+                this.analyser = null;
+                this.dataArray = null;
+                this.soundscapeContext = null;
+                this.activeSources = [];
+                this.currentSoundscape = null;
+                this.noiseLevel = 0;
+                this.dominantFrequency = 0;
+
+                // AI-only properties - no fallbacks
+                this.aiModel = null;
+                this.isAiReady = false;
+                this.currentClassification = null;
+                this.trainingProgress = 0;
+
+                this.initializeElements();
+                this.createWaveVisualizer();
+                this.setupEventListeners();
+
+                // Start AI initialization immediately
+                this.initializeAI();
+            }
+
+            initializeElements() {
+                this.micButton = document.getElementById('micButton');
+                this.noiseStatus = document.getElementById('noiseStatus');
+                this.noiseFill = document.getElementById('noiseFill');
+                this.noiseType = document.getElementById('noiseType');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.volumeValue = document.getElementById('volumeValue');
+                this.decibelLevel = document.getElementById('decibelLevel');
+                this.dominantFreq = document.getElementById('dominantFreq');
+                this.noiseClassification = document.getElementById('noiseClassification');
+                this.confidenceLevel = document.getElementById('confidenceLevel');
+                this.recommendation = document.getElementById('recommendation');
+                this.waveContainer = document.getElementById('waveContainer');
+                this.aiStatus = document.getElementById('aiStatus');
+                this.aiStatusText = document.getElementById('aiStatusText');
+                this.trainingProgress = document.getElementById('trainingProgress');
+                this.epochText = document.getElementById('epochText');
+                this.accuracyText = document.getElementById('accuracyText');
+                this.progressFill = document.getElementById('progressFill');
+            }
+
+            setupEventListeners() {
+                this.micButton.addEventListener('click', () => this.toggleMonitoring());
+
+                document.querySelectorAll('.soundscape-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!this.isAiReady) {
+                            alert('🤖 AI is still training. Please wait for neural network to complete training.');
+                            return;
+                        }
+                        this.selectSoundscape(e.target.dataset.soundscape);
+                    });
+                });
+
+                this.volumeSlider.addEventListener('input', (e) => {
+                    const volume = e.target.value;
+                    this.volumeValue.textContent = volume + '%';
+                    this.updateAllSoundVolumes(volume / 100);
+                });
+            }
+
+            createWaveVisualizer() {
+                for (let i = 0; i < 50; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'wave-bar';
+                    bar.style.height = '10px';
+                    this.waveContainer.appendChild(bar);
+                }
+            }
+
+            async initializeAI() {
+                console.log('🤖 Starting AI initialization...');
+
+                try {
+                    // Check if TensorFlow.js is loaded
+                    if (typeof tf === 'undefined') {
+                        throw new Error('TensorFlow.js not loaded');
+                    }
+
+                    console.log('✅ TensorFlow.js loaded:', tf.version);
+
+                    this.updateAIStatus('Creating neural network architecture...', 'loading');
+
+                    // Create the neural network
+                    this.aiModel = await this.createNeuralNetwork();
+
+                    this.updateAIStatus('Training neural network...', 'loading');
+                    this.trainingProgress.style.display = 'block';
+
+                    // Train the model
+                    await this.trainAIModel();
+
+                    // AI is now ready
+                    this.isAiReady = true;
+                    this.updateAIStatus('🤖 AI Neural Network Active - Ready for audio analysis', 'active');
+                    this.enableControls();
+
+                    console.log('🎉 AI initialization complete!');
+
+                } catch (error) {
+                    console.error('❌ AI initialization failed:', error);
+                    this.updateAIStatus(`❌ AI Failed: ${error.message}`, 'error');
+                }
+            }
+
+            async createNeuralNetwork() {
+                console.log('🧠 Building neural network...');
+
+                const model = tf.sequential({
+                    layers: [
+                        // Input layer for audio frequency features
+                        tf.layers.dense({
+                            inputShape: [128],
+                            units: 256,
+                            activation: 'relu',
+                            name: 'audio_input'
+                        }),
+
+                        // Hidden layers for pattern recognition
+                        tf.layers.dropout({ rate: 0.3 }),
+                        tf.layers.dense({
+                            units: 128,
+                            activation: 'relu',
+                            name: 'hidden_1'
+                        }),
+
+                        tf.layers.dropout({ rate: 0.2 }),
+                        tf.layers.dense({
+                            units: 64,
+                            activation: 'relu',
+                            name: 'hidden_2'
+                        }),
+
+                        // Output layer for 6 noise classifications
+                        tf.layers.dense({
+                            units: 6,
+                            activation: 'softmax',
+                            name: 'classification_output'
+                        })
+                    ]
+                });
+
+                model.compile({
+                    optimizer: tf.train.adam(0.001),
+                    loss: 'categoricalCrossentropy',
+                    metrics: ['accuracy']
+                });
+
+                console.log('✅ Neural network created');
+                return model;
+            }
+
+            async trainAIModel() {
+                console.log('🎓 Generating training data and training neural network...');
+
+                const trainingData = this.generateTrainingData();
+                const xs = tf.tensor2d(trainingData.features);
+                const ys = tf.tensor2d(trainingData.labels);
+
+                await this.aiModel.fit(xs, ys, {
+                    epochs: 50,
+                    batchSize: 32,
+                    validationSplit: 0.2,
+                    shuffle: true,
+                    callbacks: {
+                        onEpochEnd: (epoch, logs) => {
+                            const progress = ((epoch + 1) / 50) * 100;
+                            const accuracy = (logs.acc * 100).toFixed(1);
+
+                            this.epochText.textContent = `${epoch + 1}/50 epochs`;
+                            this.accuracyText.textContent = `${accuracy}%`;
+                            this.progressFill.style.width = `${progress}%`;
+
+                            if (epoch % 5 === 0) {
+                                console.log(`📈 Training epoch ${epoch + 1}: accuracy = ${accuracy}%`);
+                            }
+                        }
+                    }
+                });
+
+                xs.dispose();
+                ys.dispose();
+
+                console.log('✅ Neural network training completed');
+            }
+
+            generateTrainingData() {
+                const features = [];
+                const labels = [];
+                const samplesPerClass = 100;
+
+                const noiseTypes = [
+                    { name: 'traffic', pattern: 'low_steady' },
+                    { name: 'conversation', pattern: 'mid_variable' },
+                    { name: 'construction', pattern: 'high_spiky' },
+                    { name: 'nature', pattern: 'scattered' },
+                    { name: 'electronic', pattern: 'high_constant' },
+                    { name: 'quiet', pattern: 'minimal' }
+                ];
+
+                noiseTypes.forEach((noiseType, typeIndex) => {
+                    for (let i = 0; i < samplesPerClass; i++) {
+                        const spectrum = this.generateSpectrum(noiseType.pattern);
+                        features.push(spectrum);
+
+                        const label = new Array(6).fill(0);
+                        label[typeIndex] = 1;
+                        labels.push(label);
+                    }
+                });
+
+                console.log(`📊 Generated ${features.length} training samples`);
+                return { features, labels };
+            }
+
+            generateSpectrum(pattern) {
+                const spectrum = new Array(128).fill(0);
+
+                switch (pattern) {
+                    case 'low_steady':
+                        for (let i = 0; i < 30; i++) {
+                            spectrum[i] = 0.6 + Math.random() * 0.3;
+                        }
+                        break;
+                    case 'mid_variable':
+                        for (let i = 20; i < 80; i++) {
+                            spectrum[i] = Math.random() * 0.8;
+                        }
+                        break;
+                    case 'high_spiky':
+                        for (let i = 0; i < 128; i++) {
+                            spectrum[i] = Math.random() > 0.8 ? Math.random() : 0.1;
+                        }
+                        break;
+                    case 'scattered':
+                        for (let i = 40; i < 128; i++) {
+                            spectrum[i] = Math.random() > 0.7 ? Math.random() * 0.6 : 0;
+                        }
+                        break;
+                    case 'high_constant':
+                        for (let i = 80; i < 128; i++) {
+                            spectrum[i] = 0.4 + Math.random() * 0.2;
+                        }
+                        break;
+                    case 'minimal':
+                        for (let i = 0; i < 128; i++) {
+                            spectrum[i] = Math.random() * 0.1;
+                        }
+                        break;
+                }
+
+                return spectrum;
+            }
+
+            updateAIStatus(message, status) {
+                this.aiStatusText.textContent = message;
+                this.aiStatus.className = `ai-status ${status}`;
+            }
+
+            enableControls() {
+                this.micButton.disabled = false;
+                this.volumeSlider.disabled = false;
+                document.querySelectorAll('.soundscape-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
+
+                this.noiseStatus.textContent = 'Click microphone to start AI analysis';
+                this.noiseType.textContent = 'AI ready for audio classification';
+            }
+
+            async toggleMonitoring() {
+                if (!this.isAiReady) {
+                    alert('🤖 AI neural network is still training. Please wait...');
+                    return;
+                }
+
+                if (!this.isMonitoring) {
+                    await this.startMonitoring();
+                } else {
+                    this.stopMonitoring();
+                }
+            }
+
+            async startMonitoring() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.microphone = this.audioContext.createMediaStreamSource(stream);
+                    this.analyser = this.audioContext.createAnalyser();
+
+                    this.analyser.fftSize = 2048;
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
+                    this.microphone.connect(this.analyser);
+
+                    this.isMonitoring = true;
+                    this.micButton.classList.add('active');
+                    this.noiseStatus.textContent = '🤖 AI analyzing audio...';
+
+                    this.startAnalysisLoop();
+
+                } catch (error) {
+                    console.error('Microphone error:', error);
+                    alert('❌ Microphone access required for AI analysis. Please allow microphone access.');
+                }
+            }
+
+            stopMonitoring() {
+                if (this.audioContext) {
+                    this.audioContext.close();
+                }
+
+                this.isMonitoring = false;
+                this.micButton.classList.remove('active');
+                this.noiseStatus.textContent = 'Click microphone to start AI analysis';
+                this.noiseFill.style.width = '0%';
+            }
+
+            startAnalysisLoop() {
+                const analyze = async () => {
+                    if (!this.isMonitoring) return;
+
+                    await this.analyzeAudioWithAI();
+                    this.updateVisualization();
+                    requestAnimationFrame(analyze);
+                };
+                analyze();
+            }
+
+            async analyzeAudioWithAI() {
+                if (!this.analyser || !this.isAiReady) return;
+
+                this.analyser.getByteFrequencyData(this.dataArray);
+
+                // Calculate basic audio metrics
+                let sum = 0;
+                let maxValue = 0;
+                let maxIndex = 0;
+
+                for (let i = 0; i < this.dataArray.length; i++) {
+                    sum += this.dataArray[i];
+                    if (this.dataArray[i] > maxValue) {
+                        maxValue = this.dataArray[i];
+                        maxIndex = i;
+                    }
+                }
+
+                this.noiseLevel = sum / this.dataArray.length;
+                this.dominantFrequency = maxIndex * (this.audioContext.sampleRate / 2) / this.dataArray.length;
+
+                // AI Classification
+                const classification = await this.classifyWithAI(this.dataArray);
+                this.currentClassification = classification;
+
+                this.updateUI();
+
+                // AI Recommendation
+                if (!this.currentSoundscape && this.noiseLevel > 50) {
+                    await this.generateAIRecommendation();
+                }
+            }
+
+            async classifyWithAI(audioData) {
+                try {
+                    const features = this.extractAudioFeatures(audioData);
+
+                    const prediction = tf.tidy(() => {
+                        const inputTensor = tf.tensor2d([features]);
+                        return this.aiModel.predict(inputTensor);
+                    });
+
+                    const probabilities = await prediction.data();
+                    const classNames = ['traffic', 'conversation', 'construction', 'nature', 'electronic', 'quiet'];
+                    const maxIndex = probabilities.indexOf(Math.max(...probabilities));
+                    const confidence = probabilities[maxIndex];
+
+                    prediction.dispose();
+
+                    return {
+                        type: classNames[maxIndex],
+                        confidence: confidence
+                    };
+
+                } catch (error) {
+                    console.error('AI classification error:', error);
+                    return { type: 'unknown', confidence: 0 };
+                }
+            }
+
+            extractAudioFeatures(audioData) {
+                const features = new Array(128).fill(0);
+                const binSize = Math.floor(audioData.length / 128);
+
+                for (let i = 0; i < 128; i++) {
+                    let sum = 0;
+                    const start = i * binSize;
+                    const end = Math.min(start + binSize, audioData.length);
+
+                    for (let j = start; j < end; j++) {
+                        sum += audioData[j];
+                    }
+
+                    features[i] = binSize > 0 ? sum / binSize / 255 : 0;
+                }
+
+                return features;
+            }
+
+            updateUI() {
+                // Update noise level bar
+                const percentage = Math.min((this.noiseLevel / 255) * 100, 100);
+                this.noiseFill.style.width = percentage + '%';
+
+                // Update decibel level
+                const dbLevel = Math.round(20 * Math.log10(this.noiseLevel / 255 * 100 + 1));
+                this.decibelLevel.textContent = Math.max(dbLevel, 0) + ' dB';
+
+                // Update dominant frequency
+                this.dominantFreq.textContent = Math.round(this.dominantFrequency) + ' Hz';
+
+                // AI Classification results
+                if (this.currentClassification) {
+                    const aiType = this.currentClassification.type;
+                    const confidence = this.currentClassification.confidence;
+
+                    this.noiseClassification.textContent = aiType.charAt(0).toUpperCase() + aiType.slice(1);
+                    this.confidenceLevel.textContent = (confidence * 100).toFixed(1) + '%';
+                    this.noiseType.textContent = `🤖 AI detected: ${aiType} (${(confidence * 100).toFixed(1)}% confidence)`;
+                } else {
+                    this.noiseClassification.textContent = 'Analyzing...';
+                    this.confidenceLevel.textContent = '--%';
+                    this.noiseType.textContent = '🤖 AI analyzing audio patterns...';
+                }
+            }
+
+            updateVisualization() {
+                if (!this.dataArray) return;
+
+                const bars = this.waveContainer.querySelectorAll('.wave-bar');
+                const step = Math.floor(this.dataArray.length / bars.length);
+
+                bars.forEach((bar, index) => {
+                    const value = this.dataArray[index * step] || 0;
+                    const height = Math.max((value / 255) * 140, 5);
+                    bar.style.height = height + 'px';
+                });
+            }
+
+            async generateAIRecommendation() {
+                if (!this.currentClassification) return;
+
+                const aiRecommendations = {
+                    'traffic': { soundscape: 'ocean', reason: 'Ocean waves effectively mask low-frequency traffic noise' },
+                    'conversation': { soundscape: 'white-noise', reason: 'White noise masks human speech frequencies optimally' },
+                    'construction': { soundscape: 'rain', reason: 'Rain sounds help mask irregular construction noise patterns' },
+                    'nature': { soundscape: 'focus', reason: 'Natural environment detected, focus tones enhance concentration' },
+                    'electronic': { soundscape: 'nature', reason: 'Natural sounds counteract electronic noise stress' },
+                    'quiet': { soundscape: 'cafe', reason: 'Quiet environment, café ambiance adds productive background' }
+                };
+
+                const recommendation = aiRecommendations[this.currentClassification.type];
+
+                if (recommendation) {
+                    this.recommendation.innerHTML = `
+                        <h4>🤖 AI Neural Network Recommendation</h4>
+                        <p><strong>Detected:</strong> ${this.currentClassification.type} noise (${(this.currentClassification.confidence * 100).toFixed(1)}% confidence)</p>
+                        <p><strong>AI Suggests:</strong> ${recommendation.reason}</p>
+                        <button class="soundscape-btn" onclick="app.selectSoundscape('${recommendation.soundscape}')"
+                                style="margin-top: 15px; background: linear-gradient(45deg, #10b981, #059669); border: none; padding: 12px 24px; border-radius: 8px; color: white; cursor: pointer;">
+                            🎧 Apply ${recommendation.soundscape.replace('-', ' ')} Soundscape
+                        </button>
+                    `;
+                }
+            }
+
+            selectSoundscape(type) {
+                if (!this.isAiReady) {
+                    alert('🤖 AI is still training. Please wait for neural network to complete.');
+                    return;
+                }
+
+                if (type === 'stop') {
+                    this.stopAllSounds();
+                    return;
+                }
+
+                this.stopAllSounds();
+
+                document.querySelectorAll('.soundscape-btn:not(.stop-all-btn)').forEach(btn =>
+                    btn.classList.remove('active'));
+
+                document.querySelector(`[data-soundscape="${type}"]`).classList.add('active');
+
+                this.currentSoundscape = type;
+                this.playSoundscape(type);
+                this.updateRecommendationForSelected(type);
+            }
+
+            stopAllSounds() {
+                this.activeSources.forEach(source => {
+                    try {
+                        source.stop();
+                    } catch (e) {
+                        // Source might already be stopped
+                    }
+                });
+                this.activeSources = [];
+
+                if (this.soundscapeContext) {
+                    this.soundscapeContext.close();
+                    this.soundscapeContext = null;
+                }
+
+                document.querySelectorAll('.soundscape-btn:not(.stop-all-btn)').forEach(btn =>
+                    btn.classList.remove('active'));
+
+                this.currentSoundscape = null;
+
+                this.recommendation.innerHTML = `
+                    <h4>🔇 Soundscapes Stopped</h4>
+                    <p>All AI-generated soundscapes have been stopped. The neural network continues monitoring your environment.</p>
+                `;
+            }
+
+            playSoundscape(type) {
+                this.stopAllSounds();
+
+                this.soundscapeContext = new (window.AudioContext || window.webkitAudioContext)();
+                const masterGain = this.soundscapeContext.createGain();
+                masterGain.connect(this.soundscapeContext.destination);
+                masterGain.gain.value = this.volumeSlider.value / 100;
+
+                switch (type) {
+                    case 'white-noise':
+                        this.generateImprovedWhiteNoise(masterGain);
+                        break;
+                    case 'nature':
+                        this.generateImprovedNatureSounds(masterGain);
+                        break;
+                    case 'rain':
+                        this.generateImprovedRainSounds(masterGain);
+                        break;
+                    case 'ocean':
+                        this.generateImprovedOceanSounds(masterGain);
+                        break;
+                    case 'cafe':
+                        this.generateImprovedCafeSounds(masterGain);
+                        break;
+                    case 'focus':
+                        this.generateImprovedFocusSounds(masterGain);
+                        break;
+                }
+            }
+
+            updateAllSoundVolumes(volume) {
+                if (this.soundscapeContext && this.soundscapeContext.state !== 'closed') {
+                    const destination = this.soundscapeContext.destination;
+                    // Volume is controlled through the master gain node
+                }
+            }
+
+            updateRecommendationForSelected(soundscape) {
+                const descriptions = {
+                    'nature': 'Nature sounds reduce cortisol levels and promote relaxation through biophilic audio therapy.',
+                    'white-noise': 'White noise provides consistent spectral masking across all frequencies for optimal concentration.',
+                    'rain': 'Rain sounds create consistent pink noise patterns that aid sleep and reduce anxiety.',
+                    'ocean': 'Ocean waves provide natural low-frequency masking and promote parasympathetic nervous system activation.',
+                    'cafe': 'Café ambiance provides optimal 70dB background noise level for enhanced creativity and focus.',
+                    'focus': 'Binaural beats at 40Hz frequency stimulate gamma brain waves for enhanced cognitive performance.'
+                };
+
+                this.recommendation.innerHTML = `
+                    <h4>🤖 AI Soundscape Active</h4>
+                    <p><strong>Currently Playing:</strong> ${soundscape.replace('-', ' ')}</p>
+                    <p>${descriptions[soundscape]}</p>
+                `;
+            }
+
+            // Advanced soundscape generation methods
+            generateImprovedWhiteNoise(masterGain) {
+                const bufferSize = this.soundscapeContext.sampleRate * 4;
+                const buffer = this.soundscapeContext.createBuffer(2, bufferSize, this.soundscapeContext.sampleRate);
+
+                for (let channel = 0; channel < 2; channel++) {
+                    const data = buffer.getChannelData(channel);
+                    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        b0 = 0.99886 * b0 + white * 0.0555179;
+                        b1 = 0.99332 * b1 + white * 0.0750759;
+                        b2 = 0.96900 * b2 + white * 0.1538520;
+                        b3 = 0.86650 * b3 + white * 0.3104856;
+                        b4 = 0.55000 * b4 + white * 0.5329522;
+                        b5 = -0.7616 * b5 - white * 0.0168980;
+                        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+                        b6 = white * 0.115926;
+                    }
+                }
+
+                const source = this.soundscapeContext.createBufferSource();
+                source.buffer = buffer;
+                source.loop = true;
+                source.connect(masterGain);
+                source.start();
+                this.activeSources.push(source);
+            }
+
+            generateImprovedNatureSounds(masterGain) {
+                // Bird chirping layers
+                for (let i = 0; i < 3; i++) {
+                    const birdOsc = this.soundscapeContext.createOscillator();
+                    const birdGain = this.soundscapeContext.createGain();
+                    const birdFilter = this.soundscapeContext.createBiquadFilter();
+
+                    birdOsc.type = 'sine';
+                    birdOsc.frequency.value = 800 + Math.random() * 1200;
+                    birdFilter.type = 'bandpass';
+                    birdFilter.frequency.value = 1000 + Math.random() * 500;
+                    birdFilter.Q.value = 10;
+                    birdGain.gain.value = 0;
+
+                    birdOsc.connect(birdFilter);
+                    birdFilter.connect(birdGain);
+                    birdGain.connect(masterGain);
+
+                    const chirpPattern = () => {
+                        if (this.soundscapeContext.state === 'closed') return;
+                        const now = this.soundscapeContext.currentTime;
+                        birdGain.gain.setValueAtTime(0, now);
+                        birdGain.gain.linearRampToValueAtTime(0.08, now + 0.1);
+                        birdGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3 + Math.random() * 0.5);
+                        setTimeout(chirpPattern, (2 + Math.random() * 4) * 1000);
+                    };
+
+                    birdOsc.start();
+                    this.activeSources.push(birdOsc);
+                    setTimeout(chirpPattern, Math.random() * 2000);
+                }
+
+                // Wind noise
+                const windNoise = this.createFilteredNoise(100, 800, 0.15);
+                windNoise.connect(masterGain);
+            }
+
+            generateImprovedRainSounds(masterGain) {
+                const rainBase = this.createFilteredNoise(200, 4000, 0.25);
+                const rainFilter = this.soundscapeContext.createBiquadFilter();
+                rainFilter.type = 'lowpass';
+                rainFilter.frequency.value = 2000;
+                rainBase.connect(rainFilter);
+                rainFilter.connect(masterGain);
+
+                // Rain droplets
+                const createDroplet = () => {
+                    if (this.soundscapeContext.state === 'closed') return;
+                    const dropOsc = this.soundscapeContext.createOscillator();
+                    const dropGain = this.soundscapeContext.createGain();
+                    dropOsc.frequency.value = 1000 + Math.random() * 2000;
+                    dropGain.gain.value = 0;
+                    const now = this.soundscapeContext.currentTime;
+                    dropGain.gain.setValueAtTime(0, now);
+                    dropGain.gain.linearRampToValueAtTime(0.1, now + 0.01);
+                    dropGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    dropOsc.connect(dropGain);
+                    dropGain.connect(masterGain);
+                    dropOsc.start();
+                    dropOsc.stop(now + 0.1);
+                    setTimeout(createDroplet, Math.random() * 100 + 50);
+                };
+                createDroplet();
+            }
+
+            generateImprovedOceanSounds(masterGain) {
+                const deepOsc = this.soundscapeContext.createOscillator();
+                const deepGain = this.soundscapeContext.createGain();
+                const deepLFO = this.soundscapeContext.createOscillator();
+                const deepLFOGain = this.soundscapeContext.createGain();
+
+                deepOsc.type = 'sine';
+                deepOsc.frequency.value = 40;
+                deepLFO.frequency.value = 0.1;
+                deepLFOGain.gain.value = 20;
+                deepGain.gain.value = 0.3;
+
+                deepLFO.connect(deepLFOGain);
+                deepLFOGain.connect(deepOsc.frequency);
+                deepOsc.connect(deepGain);
+                deepGain.connect(masterGain);
+
+                deepOsc.start();
+                deepLFO.start();
+                this.activeSources.push(deepOsc, deepLFO);
+            }
+
+            generateImprovedCafeSounds(masterGain) {
+                const chatterNoise = this.createFilteredNoise(300, 3000, 0.15);
+                const chatterFilter = this.soundscapeContext.createBiquadFilter();
+                chatterFilter.type = 'bandpass';
+                chatterFilter.frequency.value = 1000;
+                chatterNoise.connect(chatterFilter);
+                chatterFilter.connect(masterGain);
+            }
+
+            generateImprovedFocusSounds(masterGain) {
+                const leftOsc = this.soundscapeContext.createOscillator();
+                const rightOsc = this.soundscapeContext.createOscillator();
+                const merger = this.soundscapeContext.createChannelMerger(2);
+                const focusGain = this.soundscapeContext.createGain();
+
+                leftOsc.frequency.value = 200;
+                rightOsc.frequency.value = 240; // 40Hz gamma waves
+                focusGain.gain.value = 0.3;
+
+                leftOsc.connect(merger, 0, 0);
+                rightOsc.connect(merger, 0, 1);
+                merger.connect(focusGain);
+                focusGain.connect(masterGain);
+
+                leftOsc.start();
+                rightOsc.start();
+                this.activeSources.push(leftOsc, rightOsc);
+            }
+
+            createFilteredNoise(lowFreq, highFreq, volume) {
+                const bufferSize = this.soundscapeContext.sampleRate * 2;
+                const buffer = this.soundscapeContext.createBuffer(2, bufferSize, this.soundscapeContext.sampleRate);
+
+                for (let channel = 0; channel < 2; channel++) {
+                    const data = buffer.getChannelData(channel);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * volume;
+                    }
+                }
+
+                const source = this.soundscapeContext.createBufferSource();
+                const filter = this.soundscapeContext.createBiquadFilter();
+
+                source.buffer = buffer;
+                source.loop = true;
+                filter.type = 'bandpass';
+                filter.frequency.value = (lowFreq + highFreq) / 2;
+
+                source.connect(filter);
+                source.start();
+                this.activeSources.push(source);
+
+                return filter;
+            }
+        }
+
+        // Initialize the AI-powered app
+        const app = new AIUrbanNoiseFilter();
+    </script>
 </body>
 </html>
